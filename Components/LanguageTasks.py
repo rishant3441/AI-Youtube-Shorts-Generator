@@ -58,7 +58,7 @@ def GetHighlight(Transcription):
     try:
 
         response = openai.ChatCompletion.create(
-            model="gpt-4o-2024-05-13",
+            model="gpt-4.1-2025-04-14",
             temperature=0.7,
             messages=[
                 {"role": "system", "content": system},

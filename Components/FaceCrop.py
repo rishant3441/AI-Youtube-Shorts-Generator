@@ -6,8 +6,10 @@ global Fps
 
 def crop_to_vertical(input_video_path, output_video_path):
     detect_faces_and_speakers(input_video_path, "DecOut.mp4")
+    print("Done detecting faces and speakers")
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
+    print("Creating video capture 2")
     cap = cv2.VideoCapture(input_video_path, cv2.CAP_FFMPEG)
     if not cap.isOpened():
         print("Error: Could not open video.")
@@ -40,6 +42,7 @@ def crop_to_vertical(input_video_path, output_video_path):
     print(fps)
     count = 0
     for _ in range(total_frames):
+        print("Going through frames")
         ret, frame = cap.read()
         if not ret:
             print("Error: Could not read frame.")

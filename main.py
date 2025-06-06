@@ -20,16 +20,20 @@ if Vid:
             for text, start, end in transcriptions:
                 TransText += (f"{start} - {end}: {text}")
 
+            print("Getting highlights...")
             start , stop = GetHighlight(TransText)
             if start != 0 and stop != 0:
                 print(f"Start: {start} , End: {stop}")
 
                 Output = "Out.mp4"
 
+                print("Cropping video...")
                 crop_video(Vid, Output, start, stop)
                 croped = "croped.mp4"
 
+                print("Cropping to vertical...")
                 crop_to_vertical("Out.mp4", croped)
+                print("Combining videos...")
                 combine_videos("Out.mp4", croped, "Final.mp4")
             else:
                 print("Error in getting highlight")
