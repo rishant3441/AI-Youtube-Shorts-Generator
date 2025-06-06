@@ -216,10 +216,10 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
 
         print("Writing frame...")
         out.write(frame)
-        cv2.imshow('Frame', frame)
+        #cv2.imshow('Frame', frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        #if cv2.waitKey(1) & 0xFF == ord('q'):
+        #    break
 
     print("Releasing resources...")
     cap.release()
