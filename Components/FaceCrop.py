@@ -47,54 +47,60 @@ def crop_to_vertical(input_video_path, output_video_path):
         if not ret:
             print("Error: Could not read frame.")
             break
+
+        # New logic starts here
+        speaker_X, speaker_Y, speaker_W, speaker_H = None, None, None, None
+        if count < len(Frames) and Frames[count] is not None:
+            speaker_coords = Frames[count]  # [x_min, y_min, x_max, y_max]
+            speaker_X = speaker_coords[0]
+            speaker_Y = speaker_coords[1]
+            speaker_W = speaker_coords[2] - speaker_coords[0]
+            speaker_H = speaker_coords[3] - speaker_coords[1]
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-        if len(faces) >-1:
-            if len(faces) == 0:
-                (x, y, w, h) = Frames[count]
 
-            # (x, y, w, h) = faces[0]  
-            try:
-                #check if face 1 is active
-                (X, Y, W, H) = Frames[count]
-            except Exception as e:
-                print(e)
-                (X, Y, W, H) = Frames[count][0]
-                print(Frames[count][0])
+        current_face_x, current_face_y, current_face_w, current_face_h = None, None, None, None
+
+        if len(faces) > 0:
+            if speaker_X is not None:
+                for f_coords in faces:
+                    fx, fy, fw, fh = f_coords
+                    face_center_x = fx + fw // 2
+                    if speaker_X <= face_center_x <= (speaker_X + speaker_W):
+                        current_face_x, current_face_y, current_face_w, current_face_h = fx, fy, fw, fh
+                        break
             
-            for f in faces:
-                x1, y1, w1, h1 = f
-                center = x1+ w1//2
-                if center > X and center < X+W:
-                    x = x1
-                    y = y1
-                    w = w1
-                    h = h1
-                    break
+            if current_face_x is None: # Speaker not found among faces or no speaker data
+                current_face_x, current_face_y, current_face_w, current_face_h = faces[0]
 
-            # print(faces[0])
-            centerX = x+(w//2)
-            print(centerX)
-            print(x_start - (centerX - half_width))
-            if count == 0 or (x_start - (centerX - half_width)) <1 :
-                ## IF dif from prev fram is low then no movement is done
-                pass #use prev vals
+        elif speaker_X is not None: # No faces by Haar, but Frames has speaker data
+            current_face_x, current_face_y, current_face_w, current_face_h = speaker_X, speaker_Y, speaker_W, speaker_H
+
+        if current_face_x is not None:
+            x, y, w, h = current_face_x, current_face_y, current_face_w, current_face_h
+            centerX = x + (w // 2)
+
+            # Preserve original x_start adjustment logic, but only if a face is found
+            if count == 0 or abs(x_start - (centerX - half_width)) < 1 :
+                pass
             else:
-                x_start = centerX - half_width
-                x_end = centerX + half_width
+                new_x_start = centerX - half_width
+                new_x_end = centerX + half_width
 
+                # Boundary checks for new_x_start and new_x_end against original_width
+                if new_x_start >= 0 and new_x_end <= original_width:
+                    x_start = new_x_start
+                    x_end = new_x_end
+                elif new_x_start < 0:
+                    x_start = 0
+                    x_end = vertical_width
+                elif new_x_end > original_width:
+                    x_start = original_width - vertical_width
+                    x_end = original_width
+        # If current_face_x is None, x_start and x_end remain unchanged from the previous frame.
 
-                if int(cropped_frame.shape[1]) != x_end- x_start:
-                    if x_end < original_width:
-                        x_end += int(cropped_frame.shape[1]) - (x_end-x_start)
-                        if x_end > original_width:
-                            x_start -= int(cropped_frame.shape[1]) - (x_end-x_start)
-                    else:
-                        x_start -= int(cropped_frame.shape[1]) - (x_end-x_start)
-                        if x_start < 0:
-                            x_end += int(cropped_frame.shape[1]) - (x_end-x_start)
-                    print("Frame size inconsistant")
-                    print(x_end- x_start)
+        # End of new logic
 
         count += 1
         cropped_frame = frame[:, x_start:x_end]

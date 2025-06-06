@@ -132,6 +132,7 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
 def detect_faces_and_speakers(input_video_path, output_video_path):
     # Return Frames:
     global Frames
+    Frames.clear()
     # Extract audio from the video
     print("Extracting audio from video...")
     extract_audio_from_video(input_video_path, temp_audio_path)
@@ -156,6 +157,7 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
             break
 
         frame_count += 1
+        Frames.append(None) # Initialize with None for the current frame
         print(f"Processing frame {frame_count}...")
 
         audio_frame = next(audio_generator, None)
@@ -191,8 +193,7 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
                 }
                 detected_faces_in_frame.append(face_info)
                 
-                # Append to the global list for every detected face
-                Frames.append([x, y, x1, y1])
+                # Frames.append([x, y, x1, y1]) # This line is removed as per instructions
 
         # 2. Now, determine the speaker from the faces found IN THIS FRAME
         speaker_box = None
@@ -200,6 +201,11 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
             # Find the face with the maximum lip_distance
             speaker_face = max(detected_faces_in_frame, key=lambda f: f['lip_distance'])
             speaker_box = speaker_face['box']
+            Frames[frame_count - 1] = list(speaker_box) # Update with speaker box
+
+        elif detected_faces_in_frame: # No speaker, but other faces
+            Frames[frame_count - 1] = list(detected_faces_in_frame[0]['box']) # Update with first detected face
+        # If no faces detected, Frames[frame_count - 1] remains None
 
         # 3. Draw all boxes and label the speaker
         for face in detected_faces_in_frame:
